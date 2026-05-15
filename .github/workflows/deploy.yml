@@ -6,7 +6,7 @@ on:
 
 env:
   AWS_REGION: us-east-1
-  ECS_CLUSTER: online-sales-cluster
+  ECS_CLUSTER: online-sale-cluster
 
 jobs:
   test-frontend:
@@ -53,15 +53,15 @@ jobs:
       - name: Build y push Backend
         id: build-backend
         run: |
-          IMAGE=${{ steps.login-ecr.outputs.registry }}/online-sales-backend:${{ github.sha }}
+          IMAGE=${{ steps.login-ecr.outputs.registry }}/backend-api:${{ github.sha }}
           docker build -t $IMAGE ./backend-fastapi
           docker push $IMAGE
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
 
-      - name: Build y push app-pagos
-        id: build-pagos
+      - name: Build y push Payment
+        id: build-payment
         run: |
-          IMAGE=${{ steps.login-ecr.outputs.registry }}/online-sales-pagos:${{ github.sha }}
+          IMAGE=${{ steps.login-ecr.outputs.registry }}/payment-api:${{ github.sha }}
           docker build -t $IMAGE ./payment-service
           docker push $IMAGE
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
@@ -69,7 +69,7 @@ jobs:
       - name: Build y push Frontend
         id: build-frontend
         run: |
-          IMAGE=${{ steps.login-ecr.outputs.registry }}/online-sales-frontend:${{ github.sha }}
+          IMAGE=${{ steps.login-ecr.outputs.registry }}/frontend-app:${{ github.sha }}
           docker build -t $IMAGE ./frontend-angular
           docker push $IMAGE
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
@@ -84,13 +84,13 @@ jobs:
           container-name: backend
           image: ${{ steps.build-backend.outputs.image }}
 
-      - name: Render task definition app-pagos
-        id: task-def-pagos
+      - name: Render task definition Payment
+        id: task-def-payment
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: .aws/task-def-pagos.json
-          container-name: app-pagos
-          image: ${{ steps.build-pagos.outputs.image }}
+          task-definition: .aws/task-def-payment.json
+          container-name: payment
+          image: ${{ steps.build-payment.outputs.image }}
 
       - name: Render task definition Frontend
         id: task-def-frontend
@@ -106,15 +106,15 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def-backend.outputs.task-definition }}
-          service: online-sales-backend-service
+          service: backend-service
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
 
-      - name: Deploy app-pagos en ECS Fargate
+      - name: Deploy Payment en ECS Fargate
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: ${{ steps.task-def-pagos.outputs.task-definition }}
-          service: online-sales-pagos-service
+          task-definition: ${{ steps.task-def-payment.outputs.task-definition }}
+          service: payment-service
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
 
@@ -122,6 +122,6 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def-frontend.outputs.task-definition }}
-          service: online-sales-frontend-service
+          service: frontend-service
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
