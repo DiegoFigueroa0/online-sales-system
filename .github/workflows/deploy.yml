@@ -75,6 +75,15 @@ jobs:
           docker push $IMAGE
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
 
+      # ── INYECTAR ACCOUNT ID EN TASK DEFINITIONS ───────────────────────────
+
+      - name: Reemplazar ACCOUNT_ID en task definitions
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          sed -i "s/ACCOUNT_ID/$ACCOUNT_ID/g" .aws/task-def-backend.json
+          sed -i "s/ACCOUNT_ID/$ACCOUNT_ID/g" .aws/task-def-payment.json
+          sed -i "s/ACCOUNT_ID/$ACCOUNT_ID/g" .aws/task-def-frontend.json
+
       # ── ACTUALIZAR TASK DEFINITIONS ────────────────────────────────────────
 
       - name: Render task definition Backend
