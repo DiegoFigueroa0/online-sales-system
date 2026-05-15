@@ -83,7 +83,8 @@ jobs:
           sed -i "s/ACCOUNT_ID/$ACCOUNT_ID/g" .aws/task-def-backend.json
           sed -i "s/ACCOUNT_ID/$ACCOUNT_ID/g" .aws/task-def-payment.json
           sed -i "s/ACCOUNT_ID/$ACCOUNT_ID/g" .aws/task-def-frontend.json
-          sed -i "s|SECRET_KEY_PLACEHOLDER|${{ secrets.SECRET_KEY }}|g" .aws/task-def-backend.json
+          sed -i "s|DATABASE_URL_PLACEHOLDER|${{ secrets.DATABASE_URL }}|g" .aws/task-def-backend.json
+          sed -i "s|SECRET_KEY_PLACEHOLDER|${{ secrets.SECRET_KEY }}|g"     .aws/task-def-backend.json
 
       # ── ACTUALIZAR TASK DEFINITIONS ────────────────────────────────────────
 
