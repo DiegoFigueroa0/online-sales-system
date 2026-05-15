@@ -1,17 +1,23 @@
 <nav class="navbar">
-  <span class="brand">🛒 Online Sales</span>
+  <a routerLink="/products" class="brand">
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+      <polygon points="11,1 21,6 21,16 11,21 1,16 1,6" fill="#7c6af7" opacity=".9"/>
+      <polygon points="11,5 17,8.5 17,15.5 11,19 5,15.5 5,8.5" fill="none" stroke="#fff" stroke-width="1.2"/>
+    </svg>
+    <span>NEXSTORE</span>
+  </a>
 
   @if (auth.isLoggedIn()) {
     <div class="nav-links">
       <a routerLink="/products" routerLinkActive="active">Productos</a>
       <a routerLink="/cart" routerLinkActive="active">Carrito</a>
       <a routerLink="/checkout" routerLinkActive="active">Checkout</a>
-      <button class="logout-btn" (click)="auth.logout()">Cerrar Sesión</button>
+      <button class="nav-logout" (click)="auth.logout()">Salir →</button>
     </div>
   } @else {
     <div class="nav-links">
-      <a routerLink="/login" routerLinkActive="active">Iniciar Sesión</a>
-      <a routerLink="/register" routerLinkActive="active">Registrarse</a>
+      <a routerLink="/login" routerLinkActive="active">Ingresar</a>
+      <a routerLink="/register" class="nav-cta" routerLinkActive="active">Crear cuenta</a>
     </div>
   }
 </nav>

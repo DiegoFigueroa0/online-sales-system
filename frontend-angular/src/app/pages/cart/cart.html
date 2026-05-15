@@ -1,25 +1,69 @@
 <div class="page">
-  <h1>Carrito</h1>
+  <div class="cart-header">
+    <h1>Mi Carrito</h1>
+    @if (items.length > 0) {
+      <span class="cart-count">{{ items.length }} {{ items.length === 1 ? 'producto' : 'productos' }}</span>
+    }
+  </div>
 
   @if (message) {
-    <p [class]="error ? 'error' : 'success'">{{ message }}</p>
+    <div [class]="error ? 'alert alert-err' : 'alert alert-ok'">{{ message }}</div>
   }
 
   @if (items.length === 0) {
-    <p>El carrito está vacío.</p>
-  }
-
-  @for (item of items; track item.id) {
-    <div class="cart-item">
-      <span><strong>{{ item.product_name }}</strong></span>
-      <span>x{{ item.quantity }}</span>
-      <span>${{ item.price * item.quantity | number }}</span>
-      <button (click)="remove(item.id)">Eliminar</button>
+    <div class="cart-empty">
+      <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+        <circle cx="32" cy="32" r="32" fill="rgba(124,106,247,0.08)"/>
+        <path d="M20 22h4l3.5 16h14l4-11H28" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="30" cy="42" r="2" fill="var(--t3)"/>
+        <circle cx="38" cy="42" r="2" fill="var(--t3)"/>
+      </svg>
+      <p>Tu carrito está vacío</p>
+      <small>Agrega productos para comenzar</small>
     </div>
   }
 
   @if (items.length > 0) {
-    <p><strong>Total: ${{ total | number }}</strong></p>
-    <button class="checkout-btn" (click)="goToCheckout()">Ir al checkout</button>
+    <div class="cart-layout">
+      <div class="cart-items">
+        @for (item of items; track item.id) {
+          <div class="cart-item">
+            <div class="cart-item-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="#7c6af7" stroke-width="1.5" stroke-linejoin="round"/>
+                <line x1="3" y1="6" x2="21" y2="6" stroke="#7c6af7" stroke-width="1.5"/>
+                <path d="M16 10a4 4 0 01-8 0" stroke="#7c6af7" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="cart-item-info">
+              <span class="cart-item-name">{{ item.product_name }}</span>
+              <span class="cart-item-qty">Cantidad: {{ item.quantity }}</span>
+            </div>
+            <div class="cart-item-price">${{ item.price * item.quantity | number:'1.0-0' }}</div>
+            <button class="btn btn-danger" (click)="remove(item.id)">Quitar</button>
+          </div>
+        }
+      </div>
+
+      <div class="cart-summary">
+        <h2>Resumen</h2>
+        <div class="summary-row">
+          <span>Subtotal</span>
+          <span>${{ total | number:'1.0-0' }}</span>
+        </div>
+        <div class="summary-row">
+          <span>Envío</span>
+          <span class="free-tag">Gratis</span>
+        </div>
+        <div class="summary-divider"></div>
+        <div class="summary-total">
+          <span>Total</span>
+          <span>${{ total | number:'1.0-0' }}</span>
+        </div>
+        <button class="btn btn-primary summary-btn" (click)="goToCheckout()">
+          Ir al Checkout →
+        </button>
+      </div>
+    </div>
   }
 </div>

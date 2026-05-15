@@ -11,6 +11,10 @@ router = APIRouter(prefix="/checkout", tags=["Checkout"])
 
 class CheckoutRequest(BaseModel):
     card_number: str
+    cardholder_name: str = ""
+    expiry_month: int = 11
+    expiry_year: int = 25
+    security_code: str = ""
 
 
 @router.post("/")
@@ -25,7 +29,14 @@ def checkout(data: CheckoutRequest, db: Session = Depends(get_db)):
         if product:
             total += product.price * item.quantity
 
-    result = process_payment({"card_number": data.card_number, "amount": total})
+    result = process_payment({
+        "card_number": data.card_number,
+        "cardholder_name": data.cardholder_name,
+        "expiry_month": data.expiry_month,
+        "expiry_year": data.expiry_year,
+        "security_code": data.security_code,
+        "amount": total,
+    })
 
     if result.get("status") == "approved":
         db.query(CartItem).delete()

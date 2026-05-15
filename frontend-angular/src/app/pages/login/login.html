@@ -1,23 +1,39 @@
-<div class="auth-container">
-  <h1>Iniciar Sesión</h1>
+<div class="auth-page">
+  <div class="auth-glow"></div>
+  <div class="auth-card">
+    <div class="auth-logo">
+      <svg width="32" height="32" viewBox="0 0 22 22" fill="none">
+        <polygon points="11,1 21,6 21,16 11,21 1,16 1,6" fill="#7c6af7" opacity=".9"/>
+        <polygon points="11,5 17,8.5 17,15.5 11,19 5,15.5 5,8.5" fill="none" stroke="#fff" stroke-width="1.2"/>
+      </svg>
+      <span>NEXSTORE</span>
+    </div>
 
-  <div class="form-group">
-    <label>Email</label>
-    <input [(ngModel)]="email" type="email" placeholder="tu@email.com" />
+    <h1 class="auth-title">Bienvenido</h1>
+    <p class="auth-sub">Ingresa a tu cuenta para continuar</p>
+
+    @if (error) {
+      <div class="alert alert-err">{{ error }}</div>
+    }
+
+    <div class="field">
+      <label>Email</label>
+      <input [(ngModel)]="email" type="email" placeholder="tu@email.com" autocomplete="email" />
+    </div>
+
+    <div class="field">
+      <label>Contraseña</label>
+      <input [(ngModel)]="password" type="password" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+
+    <button class="btn btn-primary auth-btn" (click)="submit()" [disabled]="loading">
+      @if (loading) {
+        <span class="spinner"></span> Ingresando...
+      } @else {
+        Iniciar Sesión
+      }
+    </button>
+
+    <p class="auth-footer">¿No tienes cuenta? <a routerLink="/register">Regístrate aquí</a></p>
   </div>
-
-  <div class="form-group">
-    <label>Contraseña</label>
-    <input [(ngModel)]="password" type="password" placeholder="••••••••" />
-  </div>
-
-  @if (error) {
-    <p class="error">{{ error }}</p>
-  }
-
-  <button (click)="submit()" [disabled]="loading">
-    {{ loading ? 'Ingresando...' : 'Iniciar Sesión' }}
-  </button>
-
-  <p class="auth-link">¿No tienes cuenta? <a routerLink="/register">Regístrate aquí</a></p>
 </div>

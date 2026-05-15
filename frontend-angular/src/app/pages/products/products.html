@@ -1,22 +1,41 @@
 <div class="page">
-  <h1>Productos</h1>
+  <div class="products-header">
+    <h1>Productos</h1>
+    <p class="products-sub">Descubre nuestra colección exclusiva</p>
+  </div>
 
   @if (message) {
-    <p [class]="error ? 'error' : 'success'">{{ message }}</p>
-  }
-
-  @for (product of products; track product.id) {
-    <div class="product">
-      <div>
-        <h3>{{ product.name }}</h3>
-        <p>Precio: ${{ product.price | number }}</p>
-        <p>Stock: {{ product.stock }}</p>
-      </div>
-      <button (click)="add(product)">Agregar al carrito</button>
-    </div>
+    <div [class]="error ? 'alert alert-err' : 'alert alert-ok'">{{ message }}</div>
   }
 
   @if (products.length === 0 && !error) {
-    <p>Cargando productos...</p>
+    <div class="loading-state">
+      <div class="loading-dots"><span></span><span></span><span></span></div>
+      <p>Cargando productos...</p>
+    </div>
   }
+
+  <div class="products-grid">
+    @for (product of products; track product.id) {
+      <div class="product-card">
+        <div class="product-badge">En stock</div>
+        <div class="product-icon">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <rect width="40" height="40" rx="12" fill="rgba(124,106,247,0.12)"/>
+            <path d="M13 14h2l2.4 10.6h9.2L29 18H16" stroke="#7c6af7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="18.5" cy="28" r="1.5" fill="#7c6af7"/>
+            <circle cx="25" cy="28" r="1.5" fill="#7c6af7"/>
+          </svg>
+        </div>
+        <h3 class="product-name">{{ product.name }}</h3>
+        <div class="product-price">${{ product.price | number:'1.0-0' }}</div>
+        <div class="product-stock">
+          <span class="stock-dot"></span>{{ product.stock }} disponibles
+        </div>
+        <button class="btn btn-primary product-btn" (click)="add(product)">
+          + Agregar al carrito
+        </button>
+      </div>
+    }
+  </div>
 </div>

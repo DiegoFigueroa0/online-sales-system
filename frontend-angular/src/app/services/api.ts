@@ -53,10 +53,20 @@ export class ApiService {
     );
   }
 
-  checkout(cardNumber: string): Promise<PaymentResult> {
+  checkout(
+    cardNumber: string,
+    cardholderName: string,
+    expiryMonth: number,
+    expiryYear: number,
+    securityCode: string,
+  ): Promise<PaymentResult> {
     return firstValueFrom(
       this.http.post<PaymentResult>(`${this.baseUrl}/checkout`, {
         card_number: cardNumber,
+        cardholder_name: cardholderName,
+        expiry_month: expiryMonth,
+        expiry_year: expiryYear,
+        security_code: securityCode,
       })
     );
   }
