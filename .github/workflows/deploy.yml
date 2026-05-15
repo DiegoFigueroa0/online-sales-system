@@ -7,7 +7,7 @@ on:
 
 env:
   AWS_REGION: us-east-1
-  ECS_CLUSTER: online-sale-cluster
+  ECS_CLUSTER: online-sales-cluster
 
 jobs:
   test-frontend:
