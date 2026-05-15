@@ -6,7 +6,7 @@ import { firstValueFrom } from 'rxjs';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private tokenKey = 'auth_token';
-  private baseUrl = 'http://localhost:8000';
+  private baseUrl = 'http://54.227.193.242:8000';
 
   constructor(private http: HttpClient, private router: Router) {}
 

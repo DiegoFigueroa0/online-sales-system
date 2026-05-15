@@ -26,7 +26,7 @@ export interface PaymentResult {
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  private baseUrl = 'http://localhost:8000';
+  private baseUrl = 'http://54.227.193.242:8000';
 
   constructor(private http: HttpClient) {}
 
