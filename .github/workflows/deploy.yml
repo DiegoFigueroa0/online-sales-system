@@ -30,10 +30,14 @@ jobs:
         run: npm test -- --watch=false
         working-directory: frontend-angular
 
-  build-and-deploy:
-    name: Build, Push y Deploy
+  build:
+    name: Build y Push imágenes
     runs-on: ubuntu-latest
     needs: test-frontend
+    outputs:
+      backend-image:  ${{ steps.build-backend.outputs.image }}
+      payment-image:  ${{ steps.build-payment.outputs.image }}
+      frontend-image: ${{ steps.build-frontend.outputs.image }}
 
     steps:
       - uses: actions/checkout@v4
@@ -48,8 +52,6 @@ jobs:
       - name: Login a Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
-
-      # ── BUILD Y PUSH IMÁGENES ──────────────────────────────────────────────
 
       - name: Build y push Backend
         id: build-backend
@@ -75,65 +77,109 @@ jobs:
           docker push $IMAGE
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
 
-      # ── INYECTAR ACCOUNT ID EN TASK DEFINITIONS ───────────────────────────
+  deploy-backend:
+    name: Deploy Backend
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Inyectar variables en task definitions
+      - name: Configurar credenciales AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Inyectar variables
         run: |
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-          sed -i "s/ACCOUNT_ID/$ACCOUNT_ID/g" .aws/task-def-backend.json
-          sed -i "s/ACCOUNT_ID/$ACCOUNT_ID/g" .aws/task-def-payment.json
-          sed -i "s/ACCOUNT_ID/$ACCOUNT_ID/g" .aws/task-def-frontend.json
+          sed -i "s/ACCOUNT_ID/$ACCOUNT_ID/g"                              .aws/task-def-backend.json
           sed -i "s|DATABASE_URL_PLACEHOLDER|${{ secrets.DATABASE_URL }}|g" .aws/task-def-backend.json
           sed -i "s|SECRET_KEY_PLACEHOLDER|${{ secrets.SECRET_KEY }}|g"     .aws/task-def-backend.json
 
-      # ── ACTUALIZAR TASK DEFINITIONS ────────────────────────────────────────
-
-      - name: Render task definition Backend
-        id: task-def-backend
+      - name: Render task definition
+        id: render
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: .aws/task-def-backend.json
           container-name: backend
-          image: ${{ steps.build-backend.outputs.image }}
+          image: ${{ needs.build.outputs.backend-image }}
 
-      - name: Render task definition Payment
-        id: task-def-payment
+      - name: Deploy en ECS Fargate
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.render.outputs.task-definition }}
+          service: backend-service
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: false
+
+  deploy-payment:
+    name: Deploy Payment
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar credenciales AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Inyectar variables
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          sed -i "s/ACCOUNT_ID/$ACCOUNT_ID/g" .aws/task-def-payment.json
+
+      - name: Render task definition
+        id: render
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: .aws/task-def-payment.json
           container-name: payment
-          image: ${{ steps.build-payment.outputs.image }}
+          image: ${{ needs.build.outputs.payment-image }}
 
-      - name: Render task definition Frontend
-        id: task-def-frontend
+      - name: Deploy en ECS Fargate
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.render.outputs.task-definition }}
+          service: payment-service
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: false
+
+  deploy-frontend:
+    name: Deploy Frontend
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar credenciales AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Inyectar variables
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          sed -i "s/ACCOUNT_ID/$ACCOUNT_ID/g" .aws/task-def-frontend.json
+
+      - name: Render task definition
+        id: render
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: .aws/task-def-frontend.json
           container-name: frontend
-          image: ${{ steps.build-frontend.outputs.image }}
+          image: ${{ needs.build.outputs.frontend-image }}
 
-      # ── DEPLOY EN ECS FARGATE ──────────────────────────────────────────────
-
-      - name: Deploy Backend en ECS Fargate
+      - name: Deploy en ECS Fargate
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: ${{ steps.task-def-backend.outputs.task-definition }}
-          service: backend-service
-          cluster: ${{ env.ECS_CLUSTER }}
-          wait-for-service-stability: true
-
-      - name: Deploy Payment en ECS Fargate
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-        with:
-          task-definition: ${{ steps.task-def-payment.outputs.task-definition }}
-          service: payment-service
-          cluster: ${{ env.ECS_CLUSTER }}
-          wait-for-service-stability: true
-
-      - name: Deploy Frontend en ECS Fargate
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-        with:
-          task-definition: ${{ steps.task-def-frontend.outputs.task-definition }}
+          task-definition: ${{ steps.render.outputs.task-definition }}
           service: frontend-service
           cluster: ${{ env.ECS_CLUSTER }}
-          wait-for-service-stability: true
+          wait-for-service-stability: false
