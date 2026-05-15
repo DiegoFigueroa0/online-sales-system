@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    database_url: str = "postgresql://user:password@db:5432/sales"
+    database_url: str = "sqlite:///./sales.db"
     secret_key: str = "change-me-in-production"
     payment_service_url: str = "http://payment-service:8001/pay"
 
