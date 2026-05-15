@@ -1,0 +1,127 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+
+env:
+  AWS_REGION: us-east-1
+  ECS_CLUSTER: online-sales-cluster
+
+jobs:
+  test-frontend:
+    name: Tests Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend-angular/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+        working-directory: frontend-angular
+
+      - name: Ejecutar tests
+        run: npm test -- --watch=false
+        working-directory: frontend-angular
+
+  build-and-deploy:
+    name: Build, Push y Deploy
+    runs-on: ubuntu-latest
+    needs: test-frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar credenciales AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login a Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # ── BUILD Y PUSH IMÁGENES ──────────────────────────────────────────────
+
+      - name: Build y push Backend
+        id: build-backend
+        run: |
+          IMAGE=${{ steps.login-ecr.outputs.registry }}/online-sales-backend:${{ github.sha }}
+          docker build -t $IMAGE ./backend-fastapi
+          docker push $IMAGE
+          echo "image=$IMAGE" >> $GITHUB_OUTPUT
+
+      - name: Build y push app-pagos
+        id: build-pagos
+        run: |
+          IMAGE=${{ steps.login-ecr.outputs.registry }}/online-sales-pagos:${{ github.sha }}
+          docker build -t $IMAGE ./payment-service
+          docker push $IMAGE
+          echo "image=$IMAGE" >> $GITHUB_OUTPUT
+
+      - name: Build y push Frontend
+        id: build-frontend
+        run: |
+          IMAGE=${{ steps.login-ecr.outputs.registry }}/online-sales-frontend:${{ github.sha }}
+          docker build -t $IMAGE ./frontend-angular
+          docker push $IMAGE
+          echo "image=$IMAGE" >> $GITHUB_OUTPUT
+
+      # ── ACTUALIZAR TASK DEFINITIONS ────────────────────────────────────────
+
+      - name: Render task definition Backend
+        id: task-def-backend
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: .aws/task-def-backend.json
+          container-name: backend
+          image: ${{ steps.build-backend.outputs.image }}
+
+      - name: Render task definition app-pagos
+        id: task-def-pagos
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: .aws/task-def-pagos.json
+          container-name: app-pagos
+          image: ${{ steps.build-pagos.outputs.image }}
+
+      - name: Render task definition Frontend
+        id: task-def-frontend
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: .aws/task-def-frontend.json
+          container-name: frontend
+          image: ${{ steps.build-frontend.outputs.image }}
+
+      # ── DEPLOY EN ECS FARGATE ──────────────────────────────────────────────
+
+      - name: Deploy Backend en ECS Fargate
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def-backend.outputs.task-definition }}
+          service: online-sales-backend-service
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      - name: Deploy app-pagos en ECS Fargate
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def-pagos.outputs.task-definition }}
+          service: online-sales-pagos-service
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      - name: Deploy Frontend en ECS Fargate
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def-frontend.outputs.task-definition }}
+          service: online-sales-frontend-service
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true

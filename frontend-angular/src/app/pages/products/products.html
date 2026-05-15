@@ -1,0 +1,22 @@
+<div class="page">
+  <h1>Productos</h1>
+
+  @if (message) {
+    <p [class]="error ? 'error' : 'success'">{{ message }}</p>
+  }
+
+  @for (product of products; track product.id) {
+    <div class="product">
+      <div>
+        <h3>{{ product.name }}</h3>
+        <p>Precio: ${{ product.price | number }}</p>
+        <p>Stock: {{ product.stock }}</p>
+      </div>
+      <button (click)="add(product)">Agregar al carrito</button>
+    </div>
+  }
+
+  @if (products.length === 0 && !error) {
+    <p>Cargando productos...</p>
+  }
+</div>

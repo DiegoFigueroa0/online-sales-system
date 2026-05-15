@@ -1,0 +1,25 @@
+<div class="page">
+  <h1>Carrito</h1>
+
+  @if (message) {
+    <p [class]="error ? 'error' : 'success'">{{ message }}</p>
+  }
+
+  @if (items.length === 0) {
+    <p>El carrito está vacío.</p>
+  }
+
+  @for (item of items; track item.id) {
+    <div class="cart-item">
+      <span><strong>{{ item.product_name }}</strong></span>
+      <span>x{{ item.quantity }}</span>
+      <span>${{ item.price * item.quantity | number }}</span>
+      <button (click)="remove(item.id)">Eliminar</button>
+    </div>
+  }
+
+  @if (items.length > 0) {
+    <p><strong>Total: ${{ total | number }}</strong></p>
+    <button class="checkout-btn" (click)="goToCheckout()">Ir al checkout</button>
+  }
+</div>

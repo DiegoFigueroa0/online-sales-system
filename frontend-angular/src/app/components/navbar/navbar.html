@@ -1,0 +1,17 @@
+<nav class="navbar">
+  <span class="brand">🛒 Online Sales</span>
+
+  @if (auth.isLoggedIn()) {
+    <div class="nav-links">
+      <a routerLink="/products" routerLinkActive="active">Productos</a>
+      <a routerLink="/cart" routerLinkActive="active">Carrito</a>
+      <a routerLink="/checkout" routerLinkActive="active">Checkout</a>
+      <button class="logout-btn" (click)="auth.logout()">Cerrar Sesión</button>
+    </div>
+  } @else {
+    <div class="nav-links">
+      <a routerLink="/login" routerLinkActive="active">Iniciar Sesión</a>
+      <a routerLink="/register" routerLinkActive="active">Registrarse</a>
+    </div>
+  }
+</nav>

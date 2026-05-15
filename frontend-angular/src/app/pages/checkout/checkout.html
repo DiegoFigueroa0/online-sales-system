@@ -1,0 +1,28 @@
+<div class="page">
+  <h1>Checkout</h1>
+
+  <div class="auth-container" style="margin: 0">
+    <div class="form-group">
+      <label for="card">Número de tarjeta</label>
+      <input id="card" [(ngModel)]="cardNumber" placeholder="1234 5678 9012 3456" />
+    </div>
+
+    @if (error) {
+      <p class="error">{{ error }}</p>
+    }
+
+    @if (result) {
+      <p [class]="result.status === 'approved' ? 'success' : 'error'">
+        @if (result.status === 'approved') {
+          Pago aprobado — ID: {{ result.transaction_id }}
+        } @else {
+          {{ result.message }}
+        }
+      </p>
+    }
+
+    <button (click)="pay()" [disabled]="loading" style="width:100%;padding:12px;background:#2d6a4f;color:white;border:none;border-radius:6px;font-size:1rem;margin-top:8px">
+      {{ loading ? 'Procesando...' : 'Pagar' }}
+    </button>
+  </div>
+</div>
