@@ -61,7 +61,7 @@ export class ApiService {
     securityCode: string,
   ): Promise<PaymentResult> {
     return firstValueFrom(
-      this.http.post<PaymentResult>(`${this.baseUrl}/checkout`, {
+      this.http.post<PaymentResult>(`${this.baseUrl}/checkout/`, {
         card_number: cardNumber,
         cardholder_name: cardholderName,
         expiry_month: expiryMonth,
